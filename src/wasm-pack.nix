@@ -35,15 +35,16 @@ in
         args.buildPhaseCargoCommand
         or ''
           HOME=$(mktemp -d)
+          mkdir -p $out
 
           wasm-pack build ${if args.workspace then args.pname else "./"} \
             --no-typescript \
             --target bundler \
-            --out-dir build \
+            --out-dir $out/build \
             --out-name index \
             --release
 
-          substituteInPlace ${if args.workspace then args.pname else "."}/build/index_bg.js \
+          substituteInPlace $out/build/index_bg.js \
             --replace "${wasmImport}" "${wasmImportReplacement}"
         '';
 
@@ -52,11 +53,12 @@ in
       installPhaseCommand =
         args.installPhaseCommand
         or ''
-          mkdir $out
+          mkdir -p $out
 
-          mv ${if args.workspace then args.pname else "."}/build/index_bg.js $out
-          mv ${if args.workspace then args.pname else "."}/build/index_bg.wasm $out/index.wasm
+          mv $out/build/index_bg.js $out
+          mv $out/build/index_bg.wasm $out/index.wasm
+          rm -r $out/build
 
-          [ -f build/snippets ] && mv ${if args.workspace then args.pname else "."}/build/snippets $out
+          [ -f build/snippets ] && mv $out/build/snippets $out
         '';
     })
